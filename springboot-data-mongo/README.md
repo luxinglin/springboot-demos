@@ -9,9 +9,8 @@ docker run --name mongodb \<br>
  &nbsp;&nbsp;&nbsp;&nbsp;-e MONGO_INITDB_ROOT_USERNAME=root \<br>
  &nbsp;&nbsp;&nbsp;&nbsp;-e MONGO_INITDB_ROOT_PASSWORD=Pioneer@2017 \<br>
  &nbsp;&nbsp;&nbsp;&nbsp;-v /data/mongodb:/data/db \<br>
- &nbsp;&nbsp;&nbsp;&nbsp;-d mongo:4.0 \<br>
- &nbsp;&nbsp;&nbsp;&nbsp;--config /data/mongodb/mongod.conf<b
-</code>
+ &nbsp;&nbsp;&nbsp;&nbsp;-d mongo:4.0<br>
+ </code>
 
 #### 2. config db & db user <br>
 <code>docker exec -it mongodb bash</code><br>
