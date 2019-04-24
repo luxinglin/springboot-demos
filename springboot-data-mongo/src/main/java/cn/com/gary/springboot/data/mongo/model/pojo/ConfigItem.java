@@ -3,7 +3,6 @@ package cn.com.gary.springboot.data.mongo.model.pojo;
 import org.springframework.data.annotation.Id;
 
 import java.io.Serializable;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -13,60 +12,45 @@ import java.util.Map;
  * @Description: TODO
  * @create 2019-04-19 16:15
  **/
-public abstract class ConfigItem implements Serializable {
+public class ConfigItem implements Serializable {
     /**
      * CI主键
      */
     @Id
-    private Long id;
+    private Integer id;
+    /**
+     * MySQL中关联资源ID
+     */
+    private Long resId;
+
+    /**
+     * 资源唯一键
+     */
+    private String resourceId;
     /**
      * CI名称
      */
     private String name;
     /**
-     * CI编码
-     */
-    private String barCode;
-    /**
      * 分类编码
      */
-    private String categoryCode;
+    private String resCategoryCode;
     /**
-     * 分类名称
+     * 位置信息
      */
-    private String categoryName;
+    private Location location;
     /**
-     * 图标
+     * 关联其他配置列表
      */
-    private List<String> logos;
-    /**
-     * 创建时间
-     */
-    private Date createDateTime;
-    /**
-     * 更新时间
-     */
-    private Date updateDateTime;
-    /**
-     * 数据来源
-     */
-    private String dataSource;
+    private List<ConfigItem> relatedConfigItems;
 
-    /**
-     * 持有者
-     */
-    private User owner;
+    private Map<String, Object> more;
 
-    /**
-     * 更多信息
-     */
-    private Map<String, Object> details;
-
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
@@ -78,75 +62,43 @@ public abstract class ConfigItem implements Serializable {
         this.name = name;
     }
 
-    public String getBarCode() {
-        return barCode;
+    public String getResCategoryCode() {
+        return resCategoryCode;
     }
 
-    public void setBarCode(String barCode) {
-        this.barCode = barCode;
+    public void setResCategoryCode(String resCategoryCode) {
+        this.resCategoryCode = resCategoryCode;
     }
 
-    public String getCategoryCode() {
-        return categoryCode;
+    public Long getResId() {
+        return resId;
     }
 
-    public void setCategoryCode(String categoryCode) {
-        this.categoryCode = categoryCode;
+    public void setResId(Long resId) {
+        this.resId = resId;
     }
 
-    public String getCategoryName() {
-        return categoryName;
+    public Location getLocation() {
+        return location;
     }
 
-    public void setCategoryName(String categoryName) {
-        this.categoryName = categoryName;
+    public void setLocation(Location location) {
+        this.location = location;
     }
 
-    public List<String> getLogos() {
-        return logos;
+    public List<ConfigItem> getRelatedConfigItems() {
+        return relatedConfigItems;
     }
 
-    public void setLogos(List<String> logos) {
-        this.logos = logos;
+    public void setRelatedConfigItems(List<ConfigItem> relatedConfigItems) {
+        this.relatedConfigItems = relatedConfigItems;
     }
 
-    public Date getCreateDateTime() {
-        return createDateTime;
+    public String getResourceId() {
+        return resourceId;
     }
 
-    public void setCreateDateTime(Date createDateTime) {
-        this.createDateTime = createDateTime;
-    }
-
-    public Date getUpdateDateTime() {
-        return updateDateTime;
-    }
-
-    public void setUpdateDateTime(Date updateDateTime) {
-        this.updateDateTime = updateDateTime;
-    }
-
-    public String getDataSource() {
-        return dataSource;
-    }
-
-    public void setDataSource(String dataSource) {
-        this.dataSource = dataSource;
-    }
-
-    public User getOwner() {
-        return owner;
-    }
-
-    public void setOwner(User owner) {
-        this.owner = owner;
-    }
-
-    public Map<String, Object> getDetails() {
-        return details;
-    }
-
-    public void setDetails(Map<String, Object> details) {
-        this.details = details;
+    public Map<String, Object> getMore() {
+        return more;
     }
 }

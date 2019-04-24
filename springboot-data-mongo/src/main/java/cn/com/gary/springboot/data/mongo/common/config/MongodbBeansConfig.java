@@ -1,8 +1,7 @@
 package cn.com.gary.springboot.data.mongo.common.config;
 
 import cn.com.gary.springboot.data.mongo.common.repository.MongoDbHelper;
-import cn.com.gary.springboot.data.mongo.model.mongo.NonPhysicalConfigItem;
-import cn.com.gary.springboot.data.mongo.model.mongo.PhysicalConfigItem;
+import cn.com.gary.springboot.data.mongo.model.pojo.ConfigItem;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -16,23 +15,13 @@ import org.springframework.context.annotation.Configuration;
 public class MongodbBeansConfig {
 
     /**
-     * 物理类CI数据存取类
+     * CI数据存取类
      *
      * @return
      */
     @Bean
-    public MongoDbHelper physicalConfigItemMongoDbHelper() {
-        return new MongoDbHelper(PhysicalConfigItem.class);
-    }
-
-    /**
-     * 非物理CI数据存取类
-     *
-     * @return
-     */
-    @Bean
-    public MongoDbHelper nonPhysicalConfigItemMongoDbHelper() {
-        return new MongoDbHelper(NonPhysicalConfigItem.class);
+    public MongoDbHelper configItemMongoDbHelper() {
+        return new MongoDbHelper(ConfigItem.class);
     }
 
 }

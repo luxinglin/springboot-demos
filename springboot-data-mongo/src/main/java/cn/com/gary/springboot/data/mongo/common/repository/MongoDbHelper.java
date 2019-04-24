@@ -1,8 +1,12 @@
 package cn.com.gary.springboot.data.mongo.common.repository;
 
+import cn.com.gary.springboot.data.mongo.common.pojo.QueryParam;
+import cn.pioneer.dcim.saas.common.exception.BizException;
 import cn.pioneer.dcim.saas.common.pojo.PageResult;
+import cn.pioneer.dcim.saas.common.util.ToyUtil;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -14,6 +18,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -75,8 +81,37 @@ public class MongoDbHelper {
             e.printStackTrace();
             return Boolean.valueOf(false);
         }
+
         return Boolean.valueOf(true);
     }
+
+    /**
+     * @param requestArgs
+     * @return
+     */
+    public Boolean saveBatch(List<Map<String, Object>> requestArgs) {
+        if (ToyUtil.listEmpty(requestArgs)) {
+            return false;
+        }
+        try {
+            List<Object> items = new ArrayList<>();
+            for (Map<String, Object> requestArg : requestArgs) {
+                Object object = getEntityClass().newInstance();
+                if (null == requestArg.get(ID)) {
+                    requestArg.put(ID, getNextId());
+                }
+                BeanUtils.populate(object, requestArg);
+                items.add(object);
+            }
+            mongoTemplate.insertAll(items);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Boolean.valueOf(false);
+        }
+
+        return Boolean.valueOf(true);
+    }
+
 
     /**
      * @param object 实体类，需自带ID
@@ -92,6 +127,19 @@ public class MongoDbHelper {
             return Boolean.valueOf(false);
         }
         return Boolean.valueOf(true);
+    }
+
+    /**
+     * @param object 实体类，需要自带id
+     * @return
+     */
+    public boolean remove(Object object) {
+        try {
+            this.mongoTemplate.remove(object, this.collectionName);
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
     }
 
     /**
@@ -158,18 +206,104 @@ public class MongoDbHelper {
         return this.mongoTemplate.find(query, this.entityClass, this.collectionName);
     }
 
+    /**
+     * 分页查询
+     *
+     * @param criteria
+     * @param pageSize
+     * @param pageNumber
+     * @return
+     */
     public PageResult page(Criteria criteria, Integer pageSize, Integer pageNumber) {
         Query query = new Query(criteria).skip((pageNumber.intValue() - 1) * pageSize.intValue()).limit(pageSize.intValue());
         _sort(query);
-        long total = this.mongoTemplate.count(query,this.entityClass);
-        List data =  this.mongoTemplate.find(query, this.entityClass, this.collectionName);
-        PageResult pageResult = new PageResult(total,data);
+        long total = this.mongoTemplate.count(query, this.entityClass);
+        List data = this.mongoTemplate.find(query, this.entityClass, this.collectionName);
+        PageResult pageResult = new PageResult(total, data);
         return pageResult;
     }
 
     public Object findAndModify(Criteria criteria, Update update) {
         // 第一个参数是查询条件，第二个参数是需要更新的字段，第三个参数是需要更新的对象，第四个参数是MongoDB数据库中的表名
         return this.mongoTemplate.findAndModify(new Query(criteria), update, this.entityClass, this.collectionName);
+    }
+
+    /**
+     * @param queryParams
+     * @return
+     */
+    private DBObject constructQuery(QueryParam... queryParams) {
+        DBObject query = new BasicDBObject();
+        Arrays.asList(queryParams).stream().forEach(p -> {
+            String operator = p.getOperator();
+            String fieldName = p.getFieldName();
+            Object value = p.getValue();
+            switch (operator) {
+                case "EQ":
+                    query.put(fieldName, new BasicDBObject("$eq", value));
+                    break;
+                case "NE":
+                    query.put(fieldName, new BasicDBObject("$ne", value));
+                    break;
+                case "GT":
+                    query.put(fieldName, new BasicDBObject("$gt", value));
+                    break;
+                case "GTE":
+                    query.put(fieldName, new BasicDBObject("$gte", value));
+                    break;
+                case "LT":
+                    query.put(fieldName, new BasicDBObject("$lt", value));
+                    break;
+                case "LTE":
+                    query.put(fieldName, new BasicDBObject("$lte", value));
+                    break;
+                case "IN":
+                    query.put(fieldName, new BasicDBObject("$in", value));
+                    break;
+                case "NIN":
+                    query.put(fieldName, new BasicDBObject("$nin", value));
+                    break;
+                default:
+                    break;
+            }
+        });
+
+        return query;
+    }
+
+    /**
+     * 条件查询
+     *
+     * @param queryParams 查询条件
+     * @return
+     * @throws BizException
+     */
+    public List<DBObject> search(QueryParam... queryParams) throws BizException {
+        try {
+            DBCollection collection = mongoTemplate.getCollection(collectionName);
+            List<DBObject> result = new ArrayList<>();
+            DBObject query = constructQuery(queryParams);
+            DBCursor dbCursor = collection.find(query);
+            while (dbCursor.hasNext()) {
+                result.add(dbCursor.next());
+            }
+            return result;
+        } catch (Exception e) {
+            throw new BizException(e);
+        }
+    }
+
+    public void createIndex(List<String> fields) {
+        if(ToyUtil.listEmpty(fields)){
+            return;
+        }
+
+        DBCollection collection = mongoTemplate.getCollection(collectionName);
+        DBObject keys = new BasicDBObject();
+        fields.forEach(field->{
+            ((BasicDBObject) keys).append(field,1);
+        });
+        collection.createIndex(keys);
     }
 
     /**
@@ -196,6 +330,7 @@ public class MongoDbHelper {
 
     /**
      * ID 自动增长
+     *
      * @return
      */
     public String getNextId() {

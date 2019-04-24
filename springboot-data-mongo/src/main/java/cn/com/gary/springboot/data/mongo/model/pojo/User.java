@@ -13,7 +13,7 @@ import java.util.List;
  **/
 public class User implements Serializable {
     @Id
-    private Long id;
+    private Integer id;
     /**
      * 姓名
      */
@@ -40,11 +40,11 @@ public class User implements Serializable {
      */
     private List<User> employees;
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

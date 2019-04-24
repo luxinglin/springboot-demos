@@ -1,19 +1,21 @@
 package cn.com.gary.springboot.data.mongo.api;
 
-import cn.com.gary.springboot.data.mongo.common.repository.MongoDbHelper;
+import cn.com.gary.springboot.data.mongo.common.pojo.QueryParam;
 import cn.com.gary.springboot.data.mongo.common.util.AnsibleFactsUtil;
-import cn.com.gary.springboot.data.mongo.model.mongo.PhysicalConfigItem;
-import cn.com.gary.springboot.data.mongo.model.pojo.User;
+import cn.com.gary.springboot.data.mongo.model.pojo.ConfigItem;
+import cn.com.gary.springboot.data.mongo.service.ConfigItemService;
 import cn.pioneer.dcim.saas.common.pojo.PageQuery;
 import cn.pioneer.dcim.saas.common.pojo.PageResult;
 import cn.pioneer.dcim.saas.common.pojo.RestResult;
 import cn.pioneer.dcim.saas.common.util.JsonUtil;
+import cn.pioneer.dcim.saas.common.util.ToyUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,93 +30,52 @@ public class ConfigItemController {
     private final static Logger LOGGER = LoggerFactory.getLogger(ConfigItemController.class);
 
     @Autowired
-    MongoDbHelper physicalConfigItemMongoDbHelper;
+    ConfigItemService configItemService;
 
     @PostMapping
-    public RestResult createPhysicalConfigItem(@RequestBody PhysicalConfigItem configItem) {
-        LOGGER.info("createPhysicalConfigItem");
-        configItem = AnsibleFactsUtil.convertAnsibleFactsJson(JsonUtil.toJson(configItem.getDetails()));
+    public RestResult createConfigItem(@RequestBody ConfigItem configItem) {
+        LOGGER.info("createConfigItem");
+//        ConfigItem configItem = AnsibleFactsUtil.convertAnsibleFactsJson(map);
 
-        //校验重复
-        PhysicalConfigItem persist = (PhysicalConfigItem) physicalConfigItemMongoDbHelper.findOne(Criteria.where("uuid").is(configItem.getUuid()));
-        if (persist != null) {
-            return new RestResult("已经存在配置，不做新增处理");
-        }
 
-        //set new id
-        configItem.setId(Long.valueOf(physicalConfigItemMongoDbHelper.getNextId(PhysicalConfigItem.class.getName())));
-        physicalConfigItemMongoDbHelper.saveOrUpdate(configItem);
+        configItemService.saveOrUpdate(configItem);
         return new RestResult("新建配置项目成功");
     }
 
-    @PutMapping
-    public RestResult updateUserName(@RequestBody User user) {
-        LOGGER.info("updateUserName");
-//        Map<String, Object> updateMap = new HashMap<>();
-//        // 查询name为itdragon-1的数据，将name修改为ITDragonBlog
-//        User persist = (User) userMongoHelper.findOne(Criteria.where("id").is(user.getId()));
-//        if (null == persist) {
-//            LOGGER.error("User non-existent");
-//            return new RestResult("修改失败，记录不存在");
-//        }
-//        updateMap.put("id", persist.getId());
-//        updateMap.put("name", user.getName());
-//        userMongoHelper.update(updateMap);
-
-        return new RestResult("用户名修改成功");
+    /**
+     * @return
+     */
+    @PostMapping("/sync")
+    public RestResult syncMysql2Mongo() {
+        LOGGER.info("syncMysql2Mongo");
+        configItemService.syncToMongodb();
+        return new RestResult("同步mysql数据到mongodb中成功");
     }
 
-    @PutMapping("/address")
-    public RestResult updateUserAddress(@RequestBody User user) {
-        LOGGER.info("updateUserAddress");
-//        Map<String, Object> updateMap = new HashMap<>();
-//        User persist = (User) userMongoHelper.findOne(Criteria.where("id").is(user.getId()));
-//        if (null == persist) {
-//            LOGGER.info("User non-existent");
-//            return new RestResult("修改失败，记录不存在");
-//        }
-//        Location address = new Location();
-//        address.setId(Long.valueOf(userMongoHelper.getNextId(Location.class.getName())));
-//        address.setProvince(user.getAddress().getProvince());
-//        address.setCity(user.getAddress().getCity());
-//        updateMap.put("id", persist.getId());
-//        updateMap.put("address", address);
-//        userMongoHelper.update(updateMap);
+    @DeleteMapping("/{id}")
+    public RestResult removeConfigItem(@PathVariable Integer id) {
+        LOGGER.info("removeConfigItem");
 
-        return new RestResult("地址修改成功");
+        configItemService.remove(id);
+
+        return new RestResult("删除配置项成功");
     }
 
-    @PutMapping("/ability")
-    public RestResult updateUserAbility(@RequestBody User user) {
-        LOGGER.info("updateUserAbility");
-//        Map<String, Object> updateMap = new HashMap<>();
-//        User perisist = (User) userMongoHelper.findOne(Criteria.where("id").is(user.getId()));
-//        if (null == perisist) {
-//            LOGGER.info("User non-existent");
-//            return new RestResult("修改失败，记录不存在");
-//        }
-//        List<String> abilitys = perisist.getAbility();
-//        user.getAbility().forEach(item -> {
-//            abilitys.add(item.toString());
-//        });
-//        updateMap.put("id", perisist.getId());
-//        updateMap.put("ability", abilitys);
-//        userMongoHelper.update(updateMap);
-
-        return new RestResult("能力值修改成功");
-    }
 
     @GetMapping
-    public PageResult pagePhysicalConfigItem(Map<String, Object> params) {
-        LOGGER.info("pagePhysicalConfigItem");
+    public PageResult pageConfigItem(Map<String, Object> params) {
+        LOGGER.info("pageConfigItem");
         PageQuery pageQuery = new PageQuery(params);
+        return configItemService.pageConfigItem(pageQuery);
+    }
 
-        // 排序
-        physicalConfigItemMongoDbHelper.setOrderDescField("id");
+    @GetMapping("/adv")
+    public RestResult advSearch(QueryParam queryParams) {
+        LOGGER.info("advSearch");
 
         // 查询id小于于100的数据
-        PageResult pageResult = physicalConfigItemMongoDbHelper.page(Criteria.where("id").lt(100), pageQuery.getPagesize(), pageQuery.getPagenum());
+        List result = configItemService.search(queryParams);
 
-        return pageResult;
+        return new RestResult(result);
     }
 }
